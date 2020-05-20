@@ -169,6 +169,7 @@ if __name__ == '__main__':
     learning_rate = 0.00001
     ratio_images_to_use = 1
     Dataset = 'HR'
+    load_checkpoint = True
 
     if Dataset == 'LR':
         data_path = '../AutomaticDB/'#'/raid/home/sylvain/RSVQA_USGS_data/'#'../AutomaticDB/'
@@ -213,5 +214,8 @@ if __name__ == '__main__':
     validate_dataset = VQALoader.VQALoader(images_path, imagesvalJSON, questionsvalJSON, answersvalJSON, encoder_questions, encoder_answers, train=False, ratio_images_to_use=ratio_images_to_use, transform=transform, patch_size = patch_size)
     
     RSVQA = model.VQAModel(encoder_questions.getVocab(), encoder_answers.getVocab(), input_size = patch_size).cuda()
+    if load_checkpoint:
+        checkpoint = torch.load('../checkpoint/ckpt.pth')
+        RSVQA.load_state_dict(checkpoint['net'])
     train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
 
