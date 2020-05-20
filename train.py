@@ -169,7 +169,7 @@ if __name__ == '__main__':
     learning_rate = 0.00001
     ratio_images_to_use = 1
     Dataset = 'HR'
-    load_checkpoint = True
+    load_checkpoint = False
 
     if Dataset == 'LR':
         data_path = '../AutomaticDB/'#'/raid/home/sylvain/RSVQA_USGS_data/'#'../AutomaticDB/'
