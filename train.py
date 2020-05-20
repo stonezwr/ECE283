@@ -86,7 +86,7 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             }
             if not os.path.isdir('checkpoint'):
                 os.mkdir('checkpoint')
-            torch.save(state, './checkpoint/ckpt.pth')
+            torch.save(state, '../checkpoint/ckpt.pth')
 
         print('epoch %d loss: %.3f' % (epoch, trainLoss[epoch]))
         print('val accuracies:')
