@@ -158,8 +158,8 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             print("total val accuracy: %.2f%%" % (accuracy*100))
             OA.append(accuracy)
             AA.append(currentAA * 1.0 / 4)
-        e_max = np.argmin(QA)
-        print("max accuracy is %.2f%% at epoch %d" % (QA[e_max]*100, e_max))
+        e_max = np.argmin(OA)
+        print("max accuracy is %.2f%% at epoch %d" % (OA[e_max]*100, e_max))
                 
 
 if __name__ == '__main__':
