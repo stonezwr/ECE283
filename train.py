@@ -26,14 +26,15 @@ import datetime
 from rich.progress import track
 
 
-def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset='HR'):
+def train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset='HR'):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
     validate_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
     
     
     optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,RSVQA.parameters()), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()#weight=weights)
-        
+   
+    best_loss = 10000000
     trainLoss = []
     valLoss = []
     if Dataset == 'HR':
@@ -74,7 +75,19 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
                 if answer[j] == pred[j]:
                     rightAnswerByQuestionType_train[type_str[j]] += 1
             
-        trainLoss.append(runningLoss / len(train_dataset))
+        loss = runningLoss / len(train_dataset)
+        trainLoss.append(loss)
+        if loss < best_loss:
+            best_loss = loss
+            state = {
+                'net': RSVQA.state_dict(),
+                'loss': loss,
+                'epoch': epoch,
+            }
+            if not os.path.isdir('checkpoint'):
+                os.mkdir('checkpoint')
+            torch.save(state, './checkpoint/ckpt.pth')
+
         print('epoch %d loss: %.3f' % (epoch, trainLoss[epoch]))
         print('val accuracies:')
         for i, key in enumerate(rightAnswerByQuestionType_train):
@@ -151,8 +164,8 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
 
 if __name__ == '__main__':
     disable_log = True
-    batch_size = 70
-    num_epochs = 150
+    batch_size = 512
+    num_epochs = 200
     learning_rate = 0.00001
     ratio_images_to_use = 1
     Dataset = 'HR'
