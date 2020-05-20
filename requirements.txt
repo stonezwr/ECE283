@@ -1,0 +1,6 @@
+torch
+rich
+numpy
+torchvision
+scikit-image
+matplotlib
