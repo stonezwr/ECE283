@@ -26,14 +26,15 @@ import datetime
 from rich.progress import track
 
 
-def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset='HR'):
+def train(network, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset='HR'):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
     validate_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=batch_size, shuffle=False, num_workers=2)
     
     
-    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad,RSVQA.parameters()), lr=learning_rate)
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, network.parameters()), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()#weight=weights)
-        
+   
+    best_loss = 10000000
     trainLoss = []
     valLoss = []
     if Dataset == 'HR':
@@ -51,7 +52,7 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
         else:
             countQuestionType_train = {'presence': 0, 'count': 0, 'comp': 0, 'rural_urban': 0}
             rightAnswerByQuestionType_train = {'presence': 0, 'count': 0, 'comp': 0, 'rural_urban': 0}
-        RSVQA.train()
+        network.train()
         runningLoss = 0
         for i, data in enumerate(track(train_loader, description = 'Training...')):
             question, answer, image, type_str = data
@@ -59,7 +60,7 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
             answer = Variable(answer.long()).cuda().resize_(question.shape[0])
             image = Variable(image.float()).cuda()
             
-            pred = RSVQA(image,question)
+            pred = network(image,question)
             loss = criterion(pred, answer)
             optimizer.zero_grad()
             loss.backward()
@@ -74,14 +75,26 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
                 if answer[j] == pred[j]:
                     rightAnswerByQuestionType_train[type_str[j]] += 1
             
-        trainLoss.append(runningLoss / len(train_dataset))
+        loss = runningLoss / len(train_dataset)
+        trainLoss.append(loss)
+        if loss < best_loss:
+            best_loss = loss
+            state = {
+                'net': network.state_dict(),
+                'loss': loss,
+                'epoch': epoch,
+            }
+            if not os.path.isdir('checkpoint'):
+                os.mkdir('checkpoint')
+            torch.save(state, '../checkpoint/ckpt.pth')
+
         print('epoch %d loss: %.3f' % (epoch, trainLoss[epoch]))
         print('val accuracies:')
         for i, key in enumerate(rightAnswerByQuestionType_train):
             print(key + ": " + str(100 * rightAnswerByQuestionType_train[key] / countQuestionType_train[key]) + "%")
 
         with torch.no_grad():
-            RSVQA.eval()
+            network.eval()
             runningLoss = 0
             if Dataset == 'HR':
                 countQuestionType = {'presence': 0, 'count': 0, 'comp': 0, 'area': 0}
@@ -96,7 +109,7 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
                 answer = Variable(answer.long()).cuda().resize_(question.shape[0])
                 image = Variable(image.float()).cuda()
 
-                pred = RSVQA(image,question)
+                pred = network(image,question)
                 loss = criterion(pred, answer)
                 runningLoss += loss.cpu().item() * question.shape[0]
                 
@@ -145,17 +158,18 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
             print("total val accuracy: %.2f%%" % (accuracy*100))
             QA.append(accuracy)
             AA.append(currentAA * 1.0 / 4)
-        e_max = np.argmin(QA)
-        print("max accuracy is %.2f%% at epoch %d" % (QA[e_max]*100, e_max))
+        e_max = np.argmin(OA)
+        print("max accuracy is %.2f%% at epoch %d" % (OA[e_max]*100, e_max))
                 
 
 if __name__ == '__main__':
     disable_log = True
-    batch_size = 70
-    num_epochs = 150
+    batch_size = 128
+    num_epochs = 200
     learning_rate = 0.00001
     ratio_images_to_use = 1
     Dataset = 'HR'
+    load_checkpoint = False
 
     if Dataset == 'LR':
         data_path = '/home/hanbinhu/eceml/project/rsvqa/RSVQA_LR/'
@@ -200,5 +214,8 @@ if __name__ == '__main__':
     validate_dataset = VQALoader.VQALoader(images_path, imagesvalJSON, questionsvalJSON, answersvalJSON, encoder_questions, encoder_answers, train=False, ratio_images_to_use=ratio_images_to_use, transform=transform, patch_size = patch_size)
     
     RSVQA = model.VQAModel(encoder_questions.getVocab(), encoder_answers.getVocab(), input_size = patch_size).cuda()
-    RSVQA = train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
+    if load_checkpoint:
+        checkpoint = torch.load('../checkpoint/ckpt.pth')
+        RSVQA.load_state_dict(checkpoint['net'])
+    train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
 
