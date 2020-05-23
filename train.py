@@ -40,7 +40,7 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
         accPerQuestionType = {'area': [], 'presence': [], 'count': [], 'comp': []}
     else:
         accPerQuestionType = {'rural_urban': [], 'presence': [], 'count': [], 'comp': []}
-    OA = []
+    QA = []
     AA = []
     for epoch in range(num_epochs):
         
@@ -143,7 +143,7 @@ def train(model, train_dataset, validate_dataset, batch_size, num_epochs, learni
                 currentAA += accPerQuestionType[type_str][epoch]
             accuracy = numRightQuestions *1.0 / numQuestions 
             print("total val accuracy: %.2f%%" % (accuracy*100))
-            OA.append(accuracy)
+            QA.append(accuracy)
             AA.append(currentAA * 1.0 / 4)
         e_max = np.argmin(QA)
         print("max accuracy is %.2f%% at epoch %d" % (QA[e_max]*100, e_max))
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     Dataset = 'HR'
 
     if Dataset == 'LR':
-        data_path = '../AutomaticDB/'#'/raid/home/sylvain/RSVQA_USGS_data/'#'../AutomaticDB/'
+        data_path = '/home/hanbinhu/eceml/project/rsvqa/RSVQA_LR/'
         allquestionsJSON = os.path.join(data_path, 'questions.json')
         allanswersJSON = os.path.join(data_path, 'answers.json')
         questionsJSON = os.path.join(data_path, 'LR_split_train_questions.json')
@@ -167,9 +167,9 @@ if __name__ == '__main__':
         questionsvalJSON = os.path.join(data_path, 'LR_split_val_questions.json')
         answersvalJSON = os.path.join(data_path, 'LR_split_val_answers.json')
         imagesvalJSON = os.path.join(data_path, 'LR_split_val_images.json')
-        images_path = os.path.join(data_path, 'data/')
+        images_path = os.path.join(data_path, 'Images_LR/')
     else:
-        data_path = '/home/zhangwenrui/VQA/RSVQA/RSVQA_HR'
+        data_path = '/home/hanbinhu/eceml/project/rsvqa/RSVQA_HR/'
         images_path = os.path.join(data_path, 'Data/')
         allquestionsJSON = os.path.join(data_path, 'USGSquestions.json')
         allanswersJSON = os.path.join(data_path, 'USGSanswers.json')
