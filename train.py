@@ -41,7 +41,7 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
         accPerQuestionType = {'area': [], 'presence': [], 'count': [], 'comp': []}
     else:
         accPerQuestionType = {'rural_urban': [], 'presence': [], 'count': [], 'comp': []}
-    QA = []
+    OA = []
     AA = []
     for epoch in range(num_epochs):
         
@@ -86,7 +86,7 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             }
             if not os.path.isdir('checkpoint'):
                 os.mkdir('checkpoint')
-            torch.save(state, '../checkpoint/ckpt.pth')
+            torch.save(state, './checkpoint/ckpt.pth')
 
         print('epoch %d loss: %.3f' % (epoch, trainLoss[epoch]))
         print('val accuracies:')
@@ -120,25 +120,6 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
                     if answer[j] == pred[j]:
                         rightAnswerByQuestionType[type_str[j]] += 1
     
-                # if i % 50 == 2 and i < 999:
-                #     fig1, f1_axes = plt.subplots(ncols=1, nrows=2)
-                #     viz_img = T.ToPILImage()(image_original[0].float().data.cpu())
-                #     viz_question = encoder_questions.decode(question[0].data.cpu().numpy())
-                #     viz_answer = encoder_answers.decode([answer[0]])
-                #     viz_pred = encoder_answers.decode([pred[0]])
-        
-        
-                #     f1_axes[0].imshow(viz_img)
-                #     f1_axes[0].axis('off')
-                #     f1_axes[0].set_title(viz_question)
-                #     #fig1.colorbar(att_h,ax=f1_axes[1])
-                #     f1_axes[1].axis('off')
-                #     f1_axes[1].set_title(viz_answer)
-                #     text = f1_axes[1].text(0.5,-0.1,viz_pred, size=12, horizontalalignment='center',
-                #                               verticalalignment='center', transform=f1_axes[1].transAxes)
-                    # plt.savefig('/tmp/VQA.png')
-                    # plt.close(fig1)
-                        
             valLoss.append(runningLoss / len(validate_dataset))
             print('epoch %d, val loss: %.3f' % (epoch, valLoss[epoch]))
             print('val accuracies:')
@@ -156,7 +137,7 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
                 currentAA += accPerQuestionType[type_str][epoch]
             accuracy = numRightQuestions *1.0 / numQuestions 
             print("total val accuracy: %.2f%%" % (accuracy*100))
-            QA.append(accuracy)
+            OA.append(accuracy)
             AA.append(currentAA * 1.0 / 4)
         e_max = np.argmin(OA)
         print("max accuracy is %.2f%% at epoch %d" % (OA[e_max]*100, e_max))
@@ -165,9 +146,9 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
 if __name__ == '__main__':
     disable_log = True
     batch_size = 128
-    num_epochs = 200
+    num_epochs = 150
     learning_rate = 0.00001
-    ratio_images_to_use = 1
+    ratio_images_to_use = 0.01
     Dataset = 'HR'
     load_checkpoint = False
 
@@ -215,7 +196,7 @@ if __name__ == '__main__':
     
     RSVQA = model.VQAModel(encoder_questions.getVocab(), encoder_answers.getVocab(), input_size = patch_size).cuda()
     if load_checkpoint:
-        checkpoint = torch.load('../checkpoint/ckpt.pth')
+        checkpoint = torch.load('./checkpoint/ckpt.pth')
         RSVQA.load_state_dict(checkpoint['net'])
     train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
 
