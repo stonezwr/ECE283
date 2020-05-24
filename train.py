@@ -139,13 +139,13 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             print("total val accuracy: %.2f%%" % (accuracy*100))
             OA.append(accuracy)
             AA.append(currentAA * 1.0 / 4)
-        e_max = np.argmin(OA)
+        e_max = np.argmax(OA)
         print("max accuracy is %.2f%% at epoch %d" % (OA[e_max]*100, e_max))
                 
 
 if __name__ == '__main__':
     disable_log = True
-    batch_size = 128
+    batch_size = 64
     num_epochs = 150
     learning_rate = 0.00001
     ratio_images_to_use = 0.01

@@ -3,8 +3,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
 
-import sys
-sys.path.append('/home/zhangwenrui/VQA/RSVQA/VQA_model/models/skip-thoughts.torch/pytorch')
+#import sys
+#sys.path.append('/home/hanbinhu/VQA/RSVQA/VQA_model/models/skip-thoughts.torch/pytorch')
 import models.skipthoughts as skipthoughts
 
 # From https://github.com/Cadene/vqa.pytorch
