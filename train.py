@@ -24,6 +24,7 @@ import os
 import datetime
 # from shutil import copyfilefrom
 from rich.progress import track
+from tqdm import tqdm
 
 
 def train(network, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset='HR'):
@@ -54,13 +55,13 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             rightAnswerByQuestionType_train = {'presence': 0, 'count': 0, 'comp': 0, 'rural_urban': 0}
         network.train()
         runningLoss = 0
-        for i, data in enumerate(track(train_loader, description = 'Training...')):
-            question, answer, image, type_str = data
+        for i, data in enumerate(tqdm(train_loader)):
+            question, answer, image, type_str, question_str = data
             question = Variable(question.long()).cuda()
             answer = Variable(answer.long()).cuda().resize_(question.shape[0])
             image = Variable(image.float()).cuda()
             
-            pred = network(image,question)
+            pred = network(image, question, question_str)
             loss = criterion(pred, answer)
             optimizer.zero_grad()
             loss.backward()
@@ -103,13 +104,13 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
                 countQuestionType = {'presence': 0, 'count': 0, 'comp': 0, 'rural_urban': 0}
                 rightAnswerByQuestionType = {'presence': 0, 'count': 0, 'comp': 0, 'rural_urban': 0}
             count_q = 0
-            for i, data in enumerate(track(validate_loader, description = 'Validating...')):
-                question, answer, image, type_str, image_original = data
+            for i, data in enumerate(tqdm(validate_loader)):
+                question, answer, image, type_str, question_str, image_original = data
                 question = Variable(question.long()).cuda()
                 answer = Variable(answer.long()).cuda().resize_(question.shape[0])
                 image = Variable(image.float()).cuda()
 
-                pred = network(image,question)
+                pred = network(image,question, question_str)
                 loss = criterion(pred, answer)
                 runningLoss += loss.cpu().item() * question.shape[0]
                 
@@ -164,7 +165,7 @@ if __name__ == '__main__':
         imagesvalJSON = os.path.join(data_path, 'LR_split_val_images.json')
         images_path = os.path.join(data_path, 'Images_LR/')
     else:
-        data_path = '/home/hanbinhu/eceml/project/rsvqa/RSVQA_HR/'
+        data_path = '/home/zhangwenrui/VQA/RSVQA/RSVQA_HR/'
         images_path = os.path.join(data_path, 'Data/')
         allquestionsJSON = os.path.join(data_path, 'USGSquestions.json')
         allanswersJSON = os.path.join(data_path, 'USGSanswers.json')

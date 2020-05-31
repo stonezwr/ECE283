@@ -9,6 +9,7 @@ Created on Fri Nov 30 09:55:48 2018
 from torchvision import models as torchmodels
 import torch.nn as nn
 import models.seq2vec
+import models.bert as bert
 import torch.nn.functional as F
 import torch
 
@@ -29,13 +30,21 @@ class VQAModel(nn.Module):
         self.num_classes = len(self.vocab_answers)
         
         self.dropoutV = torch.nn.Dropout(DROPOUT_V)
-        self.dropoutQ = torch.nn.Dropout(DROPOUT_Q)
+        # self.dropoutQ = torch.nn.Dropout(DROPOUT_Q)
         self.dropoutF = torch.nn.Dropout(DROPOUT_F)
+
+        # for skip thought
         #self.seq2vec = models.seq2vec.factory(self.vocab_questions, {'arch': '2-lstm', 'emb_size': 1200, 'hidden_size': 1200})
-        self.seq2vec = models.seq2vec.factory(self.vocab_questions, {'arch': 'skipthoughts', 'dir_st': 'data/skip-thoughts', 'type': 'BayesianUniSkip', 'dropout': 0.25, 'fixed_emb': False})
-        for param in self.seq2vec.parameters():
-            param.requires_grad = False
-        self.linear_q = nn.Linear(QUESTION_OUT, FUSION_IN)
+        # self.seq2vec = models.seq2vec.factory(self.vocab_questions, {'arch': 'skipthoughts', 'dir_st': 'data/skip-thoughts', 'type': 'BayesianUniSkip', 'dropout': 0.25, 'fixed_emb': False})
+        # for param in self.seq2vec.parameters():
+        #     param.requires_grad = False
+        # self.linear_q = nn.Linear(QUESTION_OUT, FUSION_IN)
+
+        # for bert
+        self.bert = bert.Bert()
+        # self.roberta = roberta.Roberta()
+        
+        self.linear_q = nn.Linear(1024*20, FUSION_IN)
         
         self.visual = torchmodels.resnet152(pretrained=True)
         extracted_layers = list(self.visual.children())
@@ -51,20 +60,21 @@ class VQAModel(nn.Module):
         self.linear_classif1 = nn.Linear(FUSION_IN, FUSION_HIDDEN)
         self.linear_classif2 = nn.Linear(FUSION_HIDDEN, self.num_classes)
         
-    def forward(self, input_v, input_q):
+    def forward(self, input_v, input_q, input_q_str):
         x_v = self.visual(input_v).view(-1, VISUAL_OUT)
-        x_v = self.dropoutV(x_v)
+        # x_v = self.dropoutV(x_v)
         x_v = self.linear_v(x_v)
         x_v = nn.Tanh()(x_v)
         
-        x_q = self.seq2vec(input_q)
-        x_q = self.dropoutV(x_q)
+        # x_q = self.seq2vec(input_q)
+        x_q = self.bert(input_q_str)
+        # x_q = self.dropoutQ(x_q)
         x_q = self.linear_q(x_q)
         x_q = nn.Tanh()(x_q)
         
         x = torch.mul(x_v, x_q)
         x = nn.Tanh()(x)
-        x = self.dropoutF(x)
+        # x = self.dropoutF(x)
         x = self.linear_classif1(x)
         x = nn.Tanh()(x)
         x = self.dropoutF(x)

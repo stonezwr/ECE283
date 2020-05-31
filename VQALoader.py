@@ -46,7 +46,7 @@ class VQALoader(Dataset):
         self.len = 0
         for image in self.images:
             self.len += len(self.imagesJSON['images'][image]['questions_ids'])
-        self.images_questions_answers = [[None] * 4] * self.len
+        self.images_questions_answers = [[None] * 5] * self.len
         
         index = 0
         for i, image in enumerate(self.images):
@@ -57,7 +57,7 @@ class VQALoader(Dataset):
                 type_str = question["type"]
                 answer_str = self.answersJSON['answers'][question["answers_ids"][0]]['answer']
             
-                self.images_questions_answers[index] = [self.encoder_questions.encode(question_str), self.encoder_answers.encode(answer_str), i, type_str]
+                self.images_questions_answers[index] = [self.encoder_questions.encode(question_str), self.encoder_answers.encode(answer_str), i, type_str, question_str]
                 index += 1
     def __len__(self):
         return self.len
@@ -81,7 +81,8 @@ class VQALoader(Dataset):
                 img = np.rot90(img, k=3)
         if self.transform:
             imgT = self.transform(img.copy())
+
         if self.train:
-            return np.array(question[0], dtype='int16'), np.array(question[1], dtype='int16'), imgT, question[3]
+            return np.array(question[0], dtype='int16'), np.array(question[1], dtype='int16'), imgT, question[3], question[4]
         else:
-            return np.array(question[0], dtype='int16'), np.array(question[1], dtype='int16'), imgT, question[3], T.ToTensor()(img / 255)   
+            return np.array(question[0], dtype='int16'), np.array(question[1], dtype='int16'), imgT, question[3], question[4], T.ToTensor()(img / 255)   
