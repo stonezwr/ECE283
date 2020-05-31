@@ -17,6 +17,7 @@ import torch
 from torch.autograd import Variable
 
 import numpy as np
+import json
 import matplotlib.pyplot as plt
 
 import pickle
@@ -142,11 +143,12 @@ def train(network, train_dataset, validate_dataset, batch_size, num_epochs, lear
             AA.append(currentAA * 1.0 / 4)
         e_max = np.argmax(OA)
         print("max accuracy is %.2f%% at epoch %d" % (OA[e_max]*100, e_max))
+    return trainLoss, valLoss, accPerQuestionType  
                 
 
 if __name__ == '__main__':
     disable_log = True
-    batch_size = 64
+    batch_size = 8
     num_epochs = 150
     learning_rate = 0.00001
     ratio_images_to_use = 0.01
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     load_checkpoint = False
 
     if Dataset == 'LR':
-        data_path = '/home/hanbinhu/eceml/project/rsvqa/RSVQA_LR/'
+        data_path = '/media/enbozhou/Data/EnboZhou/VQA_data/RSVQA_LR/'
         allquestionsJSON = os.path.join(data_path, 'questions.json')
         allanswersJSON = os.path.join(data_path, 'answers.json')
         questionsJSON = os.path.join(data_path, 'LR_split_train_questions.json')
@@ -165,7 +167,7 @@ if __name__ == '__main__':
         imagesvalJSON = os.path.join(data_path, 'LR_split_val_images.json')
         images_path = os.path.join(data_path, 'Images_LR/')
     else:
-        data_path = '/home/zhangwenrui/VQA/RSVQA/RSVQA_HR/'
+        data_path = '/media/enbozhou/Data/EnboZhou/VQA_data/RSVQA_HR/'
         images_path = os.path.join(data_path, 'Data/')
         allquestionsJSON = os.path.join(data_path, 'USGSquestions.json')
         allanswersJSON = os.path.join(data_path, 'USGSanswers.json')
@@ -199,5 +201,14 @@ if __name__ == '__main__':
     if load_checkpoint:
         checkpoint = torch.load('./checkpoint/ckpt.pth')
         RSVQA.load_state_dict(checkpoint['net'])
-    train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
+    trainLoss, valLoss, accPerQuestionType = train(RSVQA, train_dataset, validate_dataset, batch_size, num_epochs, learning_rate, Dataset)
+    
 
+    trainLoss = np.array(trainLoss) 
+    np.savetxt('trainLoss_ds_fine.csv', trainLoss, delimiter=',')
+    valLoss = np.array(valLoss) 
+    np.savetxt('valLoss_ds_fine.csv', valLoss, delimiter=',')
+
+    with open('accPerQuestionType_ds_fine.json', 'w') as fileObject:
+        jsObj = json.dumps(accPerQuestionType)
+        fileObject.write(jsObj)

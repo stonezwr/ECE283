@@ -46,24 +46,29 @@ class VQAModel(nn.Module):
         
         self.linear_q = nn.Linear(1024*20, FUSION_IN)
         
-        self.visual = torchmodels.resnet152(pretrained=True)
-        extracted_layers = list(self.visual.children())
-        extracted_layers = extracted_layers[0:8] #Remove the last fc and avg pool
-        self.visual = torch.nn.Sequential(*(list(extracted_layers)))
+#         self.visual = torchmodels.resnet152(pretrained=True)
+#         extracted_layers = list(self.visual.children())
+#         extracted_layers = extracted_layers[0:8] #Remove the last fc and avg pool
+#         self.visual = torch.nn.Sequential(*(list(extracted_layers)))
+#         for param in self.visual.parameters():
+#             param.requires_grad = False
+        self.visual = torchmodels.densenet169(pretrained=True)    
         for param in self.visual.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
+        self.visual.classifier = nn.Linear(1664, FUSION_IN)
         
-        output_size = (input_size / 32)**2
-        self.visual = torch.nn.Sequential(self.visual, torch.nn.Conv2d(2048,int(2048/output_size),1))
-        self.linear_v = nn.Linear(VISUAL_OUT, FUSION_IN)
+#         output_size = (input_size / 32)**2
+#         self.visual = torch.nn.Sequential(self.visual, torch.nn.Conv2d(2048,int(2048/output_size),1))
+#         self.linear_v = nn.Linear(VISUAL_OUT, FUSION_IN)
         
         self.linear_classif1 = nn.Linear(FUSION_IN, FUSION_HIDDEN)
         self.linear_classif2 = nn.Linear(FUSION_HIDDEN, self.num_classes)
         
     def forward(self, input_v, input_q, input_q_str):
-        x_v = self.visual(input_v).view(-1, VISUAL_OUT)
+        x_v = self.visual(input_v)
+        #x_v = self.visual(input_v).view(-1, VISUAL_OUT)
         # x_v = self.dropoutV(x_v)
-        x_v = self.linear_v(x_v)
+        #x_v = self.linear_v(x_v)
         x_v = nn.Tanh()(x_v)
         
         # x_q = self.seq2vec(input_q)
