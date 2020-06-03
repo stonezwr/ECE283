@@ -10,6 +10,9 @@ from torchvision import models as torchmodels
 import torch.nn as nn
 import models.seq2vec
 import models.bert as bert
+import models.transformer_XL as transXL
+import models.gpt2 as gpt2
+import models.roberta as roberta
 import torch.nn.functional as F
 import torch
 
@@ -42,6 +45,14 @@ class VQAModel(nn.Module):
 
         # for bert
         self.bert = bert.Bert()
+
+        # for transformer XL
+        # self.transXL = transXL.TransXL()
+
+        # for GPT2
+        # self.gpt2 = gpt2.GPT2()
+        
+        # for Roberta
         # self.roberta = roberta.Roberta()
         
         self.linear_q = nn.Linear(1024*20, FUSION_IN)
@@ -73,6 +84,9 @@ class VQAModel(nn.Module):
         
         # x_q = self.seq2vec(input_q)
         x_q = self.bert(input_q_str)
+        # x_q = self.transXL(input_q_str)
+        # x_q = self.gpt2(input_q_str)
+        # x_q = self.roberta(input_q_str)
         # x_q = self.dropoutQ(x_q)
         x_q = self.linear_q(x_q)
         x_q = nn.Tanh()(x_q)
