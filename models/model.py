@@ -55,7 +55,7 @@ class VQAModel(nn.Module):
         # for Roberta
         # self.roberta = roberta.Roberta()
         
-        self.linear_q = nn.Linear(1024*20, FUSION_IN)
+        self.linear_q = nn.Linear(768*20, FUSION_IN)
         
 #         self.visual = torchmodels.resnet152(pretrained=True)
 #         extracted_layers = list(self.visual.children())
@@ -88,7 +88,7 @@ class VQAModel(nn.Module):
         # x_q = self.gpt2(input_q_str)
         # x_q = self.roberta(input_q_str)
         # x_q = self.dropoutQ(x_q)
-        x_q = self.linear_q(x_q)
+        x_q = self.linear_q(x_q.view(x_q.shape[0], -1))
         x_q = nn.Tanh()(x_q)
         
         x = torch.mul(x_v, x_q)
